@@ -1,0 +1,37 @@
+{
+  "name": "codespin-sync-server",
+  "version": "0.0.1",
+  "description": "Sync codespaces with browser extensions",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "build": "rm -rf dist && npx tsc"
+  },
+  "bin": {
+    "codespin-sync-server": "dist/index.js"
+  },
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codespin-ai/codespin-sync-server.git"
+  },
+  "keywords": [
+    "llm",
+    "codegen"
+  ],
+  "license": "MIT",
+  "author": "CodeSpin.AI",
+  "bugs": {
+    "url": "https://github.com/codespin-ai/codespin-sync-server/issues"
+  },
+  "homepage": "https://github.com/codespin-ai/codespin-sync-server#readme",
+  "dependencies": {
+    "@types/express": "^4.17.21",
+    "@types/ws": "^8.5.10",
+    "express": "^4.19.2",
+    "ws": "^8.17.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
