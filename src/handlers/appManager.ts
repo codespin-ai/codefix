@@ -18,11 +18,11 @@ function cleanUpApp() {
 
 setInterval(cleanUpApp, 60000);
 
-export const sendMessageToApp = (workspaceRoot: string, message: any) => {
+export function sendMessageToApp(workspaceRoot: string, message: any) {
   const client = getClient(workspaceRoot);
   if (client) {
     client.send(JSON.stringify(message));
   } else {
     console.error(`No client found for workspaceRoot: ${workspaceRoot}`);
   }
-};
+}
