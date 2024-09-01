@@ -37,8 +37,15 @@ export async function start(invokedViaCLI = false) {
           callback(new Error("Not allowed by CORS"));
         }
       },
+      allowedHeaders: ["Access-Control-Allow-Private-Network"],
     })
   );
+
+  // Set Access-Control-Allow-Private-Network header
+  app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Private-Network", "true");
+    next();
+  });
 
   app.use(bodyParser.json());
   app.post("/keepalive", keepAlive);
