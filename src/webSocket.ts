@@ -9,25 +9,24 @@ const wsServer = new WebSocketServer({ noServer: true });
 const clients = new Map<string, WebSocket>();
 
 wsServer.on("connection", (socket, req) => {
-  const workspaceRoot = req.url?.substring(1); // Assuming URL path is /<workspaceRoot>
+  const projectPath = req.url?.substring(1);
 
-  if (workspaceRoot && registeredApps.has(workspaceRoot)) {
-    clients.set(workspaceRoot, socket);
+  if (projectPath && registeredApps.has(projectPath)) {
+    clients.set(projectPath, socket);
 
     socket.on("message", (message) => {
-      console.log(`Received message from ${workspaceRoot}: ${message}`);
-      // Process the message or forward it to the application logic
+      console.log(`Received message from ${projectPath}: ${message}`);
     });
 
     socket.on("close", () => {
-      clients.delete(workspaceRoot);
+      clients.delete(projectPath);
     });
   } else {
-    socket.close(4001, "Invalid workspaceRoot");
+    socket.close(4001, "Invalid projectPath");
   }
 });
 
-export const getClient = (workspaceRoot: string) => clients.get(workspaceRoot);
+export const getClient = (projectPath: string) => clients.get(projectPath);
 
 export const setupWebSocket = (server: Server) => {
   server.on(

@@ -1,24 +1,24 @@
 import bodyParser from "body-parser";
 import { fork } from "child_process";
 import express from "express";
+import cors from "cors"; // Import cors
 import { Server } from "http";
 import { fileURLToPath } from "url";
 import { keepAlive } from "./handlers/keepalive.js";
-import { send } from "./handlers/send.js";
+import { getProjects, register } from "./handlers/register.js";
+import { sendToIDE } from "./handlers/sendToIDE.js";
 import { setupWebSocket } from "./webSocket.js";
 
 let server: Server | null = null;
 let isStarted = false;
 
 const PORT = 60280;
-const url = `http://localhost:${PORT}/keepalive`;
 
 export async function start(invokedViaCLI = false) {
   if (isStarted) {
     return;
   }
 
-  // Check if this is a parent process and needs to fork
   if (!invokedViaCLI && !process.argv.includes("child")) {
     const __filename = fileURLToPath(import.meta.url);
     const child = fork(__filename, ["child"]);
@@ -38,12 +38,31 @@ export async function start(invokedViaCLI = false) {
     return;
   }
 
-  // Actual server start logic
   const app = express();
+
+  // Configure CORS
+  const allowedOrigins = [
+    "https://chatgpt.com",
+    "https://chat.openai.com",
+    "https://claude.ai",
+  ];
+  app.use(
+    cors({
+      origin: (origin: any, callback: any) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS"));
+        }
+      },
+    })
+  );
 
   app.use(bodyParser.json());
   app.post("/keepalive", keepAlive);
-  app.post("/send", send);
+  app.post("/send-to-ide", sendToIDE);
+  app.post("/register", register);
+  app.get("/projects", getProjects);
 
   try {
     server = app.listen(PORT, () => {
@@ -57,54 +76,6 @@ export async function start(invokedViaCLI = false) {
     });
   } catch (error) {
     console.error("Failed to start server:", error);
-  }
-}
-
-export async function register(workspaceRoot: string) {
-  const sendKeepAlive = async () => {
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workspaceRoot }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error sending keepalive: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log(data);
-    } catch (error) {
-      console.error("Error sending keepalive:", error);
-    }
-  };
-
-  const startPingProcess = async () => {
-    // First ping immediately
-    await sendKeepAlive();
-
-    // Then ping after 10 seconds
-    setTimeout(async () => {
-      await sendKeepAlive();
-      // Then ping every 30 seconds
-      setInterval(sendKeepAlive, 30000);
-    }, 10000);
-  };
-
-  try {
-    await sendKeepAlive();
-    startPingProcess();
-  } catch (error) {
-    console.error(
-      "Initial keepalive failed, attempting to start server:",
-      error
-    );
-    await start();
-    setTimeout(async () => {
-      await sendKeepAlive();
-      startPingProcess();
-    }, 10000);
   }
 }
 

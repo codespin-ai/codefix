@@ -2,19 +2,19 @@ import { Request, Response } from "express";
 import { registeredApps } from "./appManager.js";
 
 export function keepAlive(req: Request, res: Response) {
-  const { workspaceRoot } = req.body;
+  const { projectPath } = req.body;
 
-  if (!workspaceRoot) {
-    return res.status(400).json({ error: "workspaceRoot is required" });
+  if (!projectPath) {
+    return res.status(400).json({ error: "projectPath is required" });
   }
 
-  let registration = registeredApps.get(workspaceRoot);
+  let registration = registeredApps.get(projectPath);
 
   if (!registration) {
     registration = {
       timestamp: Date.now(),
     };
-    registeredApps.set(workspaceRoot, registration);
+    registeredApps.set(projectPath, registration);
   } else {
     registration.timestamp = Date.now();
   }

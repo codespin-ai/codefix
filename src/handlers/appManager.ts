@@ -5,10 +5,10 @@ import { getClient } from "../webSocket.js";
 export const registeredApps = new Map<string, AppRegistration>();
 
 function cleanUpApp() {
-  for (const workspaceRoot of registeredApps.keys()) {
-    const registration = registeredApps.get(workspaceRoot);
+  for (const projectPath of registeredApps.keys()) {
+    const registration = registeredApps.get(projectPath);
     if (registration && Date.now() - registration.timestamp >= 60000) {
-      registeredApps.delete(workspaceRoot);
+      registeredApps.delete(projectPath);
     }
   }
   if (registeredApps.size === 0) {
@@ -18,11 +18,11 @@ function cleanUpApp() {
 
 setInterval(cleanUpApp, 60000);
 
-export function sendMessageToApp(workspaceRoot: string, message: any) {
-  const client = getClient(workspaceRoot);
+export function sendMessageToApp(projectPath: string, message: any) {
+  const client = getClient(projectPath);
   if (client) {
     client.send(JSON.stringify(message));
   } else {
-    console.error(`No client found for workspaceRoot: ${workspaceRoot}`);
+    console.error(`No client found for projectPath: ${projectPath}`);
   }
 }
