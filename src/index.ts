@@ -37,7 +37,8 @@ export async function start(invokedViaCLI = false) {
           callback(new Error("Not allowed by CORS"));
         }
       },
-      allowedHeaders: ["Access-Control-Allow-Private-Network"],
+      allowedHeaders: ["Content-Type", "Access-Control-Allow-Private-Network"],
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     })
   );
 
