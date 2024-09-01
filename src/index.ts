@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import bodyParser from "body-parser";
-import { fork } from "child_process";
 import express from "express";
 import cors from "cors"; // Import cors
 import { Server } from "http";
@@ -18,25 +17,6 @@ const PORT = 60280;
 
 export async function start(invokedViaCLI = false) {
   if (isStarted) {
-    return;
-  }
-
-  if (!invokedViaCLI && !process.argv.includes("child")) {
-    const __filename = fileURLToPath(import.meta.url);
-    const child = fork(__filename, ["child"]);
-
-    child.on("message", (message) => {
-      console.log("Message from child:", message);
-    });
-
-    child.on("error", (error) => {
-      console.error("Failed to fork child process:", error);
-    });
-
-    child.on("exit", (code) => {
-      console.log(`Child process exited with code ${code}`);
-    });
-
     return;
   }
 

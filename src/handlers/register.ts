@@ -12,7 +12,7 @@ export function register(req: Request, res: Response) {
     timestamp: Date.now(),
   });
 
-  res.json({ result: "project registered" });
+  res.json({ result: `project ${projectPath} registered` });
 }
 
 export function getProjects(req: Request, res: Response) {

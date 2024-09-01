@@ -10,12 +10,12 @@ export function sendToIDE(req: Request, res: Response) {
     });
   }
 
-  const message = { type, filePath, contents };
+  const message = { type, filePath, projectPath, contents };
 
   console.log({
     message,
   });
-  
+
   sendMessageToApp(projectPath, message);
 
   res.json({ result: "message sent to IDE" });
