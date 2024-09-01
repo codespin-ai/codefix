@@ -1,10 +1,12 @@
+#!/usr/bin/env node
+
 import bodyParser from "body-parser";
 import { fork } from "child_process";
 import express from "express";
 import cors from "cors"; // Import cors
 import { Server } from "http";
 import { fileURLToPath } from "url";
-import { keepAlive } from "./handlers/keepalive.js";
+import { keepAlive } from "./handlers/keepAlive.js";
 import { getProjects, register } from "./handlers/register.js";
 import { sendToIDE } from "./handlers/sendToIDE.js";
 import { setupWebSocket } from "./webSocket.js";
