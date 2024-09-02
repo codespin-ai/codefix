@@ -1,75 +1,79 @@
 #!/usr/bin/env node
 
-import bodyParser from "body-parser";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
+import { fork } from "child_process";
 import express from "express";
-import cors from "cors"; // Import cors
+import bodyParser from "body-parser";
+import fs from "fs";
+import path from "path";
 import { Server } from "http";
-import { fileURLToPath } from "url";
-import { keepAlive } from "./handlers/keepAlive.js";
-import { getProjects, register } from "./handlers/register.js";
-import { sendToIDE } from "./handlers/sendToIDE.js";
-import { setupWebSocket } from "./webSocket.js";
+import { customAlphabet } from "nanoid";
+import getPort from "get-port";
 
 let server: Server | null = null;
 let isStarted = false;
+let projectPath: string | null = null;
+let lastKeepAlive: number | null = null;
 
-const PORT = 60280;
+// Generate an alphanumeric ID
+const nanoid = customAlphabet(
+  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+  16
+);
+const generatedId = nanoid();
 
-export async function start(invokedViaCLI = false) {
-  if (isStarted) {
-    return;
-  }
+async function startServer(port: number, autoExit: boolean) {
+  if (isStarted) return;
 
   const app = express();
+  app.use(bodyParser.json());
 
-  // Configure CORS
-  const allowedOrigins = [
-    "https://chatgpt.com",
-    "https://chat.openai.com",
-    "https://claude.ai",
-  ];
-  app.use(
-    cors({
-      origin: (origin: any, callback: any) => {
-        if (!origin || allowedOrigins.includes(origin)) {
-          callback(null, true);
-        } else {
-          callback(new Error("Not allowed by CORS"));
-        }
-      },
-      allowedHeaders: ["Content-Type", "Access-Control-Allow-Private-Network"],
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    })
-  );
-
-  // Set Access-Control-Allow-Private-Network header
-  app.use((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Private-Network", "true");
-    next();
+  app.post(`/project/${generatedId}/keepalive`, (req, res) => {
+    const { id } = req.body;
+    if (!id || id !== generatedId) {
+      return res.status(400).json({ error: "Invalid id" });
+    }
+    lastKeepAlive = Date.now();
+    res.json({ result: "keepalive received" });
   });
 
-  app.use(bodyParser.json());
-  app.post("/keepalive", keepAlive);
-  app.post("/send-to-ide", sendToIDE);
-  app.post("/register", register);
-  app.get("/projects", getProjects);
+  app.post(`/project/${generatedId}/write`, (req, res) => {
+    const { id, type, filePath, contents } = req.body;
 
-  try {
-    server = app.listen(PORT, () => {
-      isStarted = true;
-      console.log(`Server is running on port ${PORT}`);
-      if (server !== null) {
-        setupWebSocket(server);
-      } else {
-        throw new Error("Cannot upgrade to support WS; Server is null.");
+    if (!id || id !== generatedId || !projectPath) {
+      return res.status(400).json({ error: "Invalid id or project path" });
+    }
+
+    const fullPath = path.join(projectPath, filePath);
+
+    if (!fullPath.startsWith(projectPath)) {
+      return res.status(400).json({ error: "Invalid filePath" });
+    }
+
+    if (type !== "code") {
+      return res.status(400).json({ error: "Invalid type" });
+    }
+
+    fs.writeFileSync(fullPath, contents, "utf-8");
+    res.json({ result: "File written successfully" });
+  });
+
+  server = app.listen(port, () => {
+    isStarted = true;
+    console.log(`Server is running on port ${port}`);
+  });
+
+  if (autoExit) {
+    setInterval(() => {
+      if (lastKeepAlive && Date.now() - lastKeepAlive > 60000) {
+        terminateServer();
       }
-    });
-  } catch (error) {
-    console.error("Failed to start server:", error);
+    }, 60000);
   }
 }
 
-export async function terminate() {
+function terminateServer() {
   if (server) {
     server.close(() => {
       isStarted = false;
@@ -79,8 +83,67 @@ export async function terminate() {
   }
 }
 
-const __filename = fileURLToPath(import.meta.url);
+yargs(hideBin(process.argv))
+  .command(
+    "*",
+    "Run the server to sync code with the IDE",
+    (yargs) => {
+      return yargs
+        .option("project", {
+          type: "string",
+          describe: "Path to the project",
+          demandOption: true,
+        })
+        .option("port", {
+          type: "number",
+          describe: "Port to run the server on",
+        })
+        .option("auto-exit", {
+          type: "boolean",
+          describe: "Auto-exit if no keepalives received for 60 secs",
+          default: false,
+        })
+        .option("child", {
+          type: "boolean",
+          describe: "Flag to indicate child process",
+          hidden: true, // Hide this option from the help menu
+        });
+    },
+    async (argv) => {
+      if (argv.child) {
+        // This is the child process, start the server
+        projectPath = path.resolve(argv.project);
+        startServer(argv.port ?? 60280, argv.autoExit);
+      } else {
+        // This is the parent process, fork a child process
+        projectPath = path.resolve(argv.project);
+        lastKeepAlive = Date.now();
 
-if (import.meta.url === `file://${__filename}`) {
-  start(true);
-}
+        const port = argv.port ?? (await getPort());
+
+        const child = fork(
+          process.argv[1],
+          [
+            "--child",
+            "--project",
+            projectPath,
+            "--port",
+            port.toString(),
+            "--auto-exit",
+            argv.autoExit.toString(),
+          ],
+          {
+            detached: true,
+            stdio: "ignore",
+          }
+        );
+
+        console.log(
+          `Syncing at http://localhost:${port}/project/${generatedId}`
+        );
+        child.unref();
+        process.exit();
+      }
+    }
+  )
+  .help().argv;
