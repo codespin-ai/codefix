@@ -14,7 +14,7 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/codespin-ai/codespin-sync-server.git"
+    "url": "git+https://github.com/codespin-ai/codespin-sync.git"
   },
   "keywords": [
     "llm",
@@ -23,9 +23,9 @@
   "license": "MIT",
   "author": "CodeSpin.AI",
   "bugs": {
-    "url": "https://github.com/codespin-ai/codespin-sync-server/issues"
+    "url": "https://github.com/codespin-ai/codespin-sync/issues"
   },
-  "homepage": "https://github.com/codespin-ai/codespin-sync-server#readme",
+  "homepage": "https://github.com/codespin-ai/codespin-sync#readme",
   "dependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
