@@ -10,6 +10,7 @@ import path from "path";
 import { Server } from "http";
 import { customAlphabet } from "nanoid";
 import getPort from "get-port";
+import cors from "cors";
 
 let server: Server | null = null;
 let isStarted = false;
@@ -27,8 +28,30 @@ async function startServer(port: number, autoExit: boolean) {
   if (isStarted) return;
 
   const app = express();
-  app.use(bodyParser.json());
+  
+  // Configure CORS  
+  const allowedOrigins = [
+    "https://chatgpt.com",
+    "https://chat.openai.com",
+    "https://claude.ai",
+  ];
 
+  app.use(
+    cors({
+      origin: (origin: any, callback: any) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS"));
+        }
+      },
+      allowedHeaders: ["Content-Type", "Access-Control-Allow-Private-Network"],
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    })
+  );
+  
+  app.use(bodyParser.json());
+  
   app.post(`/project/${generatedId}/keepalive`, (req, res) => {
     const { id } = req.body;
     if (!id || id !== generatedId) {
