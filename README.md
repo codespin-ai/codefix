@@ -20,11 +20,19 @@ npm i -g codespin-sync
 
 ### Start the Server
 
-To start the server and sync a project, simply run:
+To start the server and sync a project in the current directory, simply run:
+
+```bash
+codespin-sync
+```
+
+To sync a project in a different directory, use this:
 
 ```bash
 codespin-sync --project /path/to/your/project
 ```
+
+Note the url printed.
 
 Options:
 

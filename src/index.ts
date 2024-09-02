@@ -92,7 +92,7 @@ yargs(hideBin(process.argv))
         .option("project", {
           type: "string",
           describe: "Path to the project",
-          demandOption: true,
+          default: ".", // Default to current directory
         })
         .option("port", {
           type: "number",
