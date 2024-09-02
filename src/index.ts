@@ -28,8 +28,8 @@ async function startServer(port: number, autoExit: boolean) {
   if (isStarted) return;
 
   const app = express();
-  
-  // Configure CORS  
+
+  // Configure CORS
   const allowedOrigins = [
     "https://chatgpt.com",
     "https://chat.openai.com",
@@ -49,11 +49,12 @@ async function startServer(port: number, autoExit: boolean) {
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     })
   );
-  
+
   app.use(bodyParser.json());
-  
-  app.post(`/project/${generatedId}/keepalive`, (req, res) => {
-    const { id } = req.body;
+
+  app.post(`/project/:id/keepalive`, (req, res) => {
+    const { id } = req.params;
+
     if (!id || id !== generatedId) {
       return res.status(400).json({ error: "Invalid id" });
     }
@@ -61,11 +62,16 @@ async function startServer(port: number, autoExit: boolean) {
     res.json({ result: "keepalive received" });
   });
 
-  app.post(`/project/${generatedId}/write`, (req, res) => {
-    const { id, type, filePath, contents } = req.body;
+  app.post(`/project/:id/write`, (req, res) => {
+    const { id } = req.params;
+    const { type, filePath, contents } = req.body;
 
-    if (!id || id !== generatedId || !projectPath) {
-      return res.status(400).json({ error: "Invalid id or project path" });
+    if (!id || id !== generatedId) {
+      return res.status(400).json({ error: "Invalid id" });
+    }
+
+    if (!projectPath) {
+      return res.status(400).json({ error: "Invalid project path" });
     }
 
     const fullPath = path.join(projectPath, filePath);
