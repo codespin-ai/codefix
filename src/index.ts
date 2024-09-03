@@ -2,7 +2,7 @@
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import path from "path";
-import { fork } from "child_process";
+import { fork, execSync } from "child_process";
 import { startServer } from "./server.js";
 import getPort from "get-port";
 import { customAlphabet } from "nanoid";
@@ -10,6 +10,7 @@ import { customAlphabet } from "nanoid";
 let projectPath: string | null = null;
 let lastKeepAlive: number | null = null;
 
+// Function to generate random IDs
 const nanoid = customAlphabet(
   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
   16
@@ -51,8 +52,10 @@ yargs(hideBin(process.argv))
         projectPath = path.resolve(argv.project);
         startServer(argv.port ?? 60280, argv.id, argv.autoExit);
       } else {
-        const randomId = nanoid();
-        // This is the parent process, fork a child process
+        const randomId = nanoid(); // ID for internal use
+        const processNameId = nanoid(); // Separate ID for process naming
+
+        // This is the parent process, fork a child process with a specific name
         projectPath = path.resolve(argv.project);
         lastKeepAlive = Date.now();
 
@@ -74,12 +77,59 @@ yargs(hideBin(process.argv))
           {
             detached: true,
             stdio: "ignore",
+            execArgv: [`--title=codespin-sync-server-${processNameId}`], // Set process name with a separate ID
           }
         );
 
         console.log(`Syncing at http://localhost:${port}/project/${randomId}`);
         child.unref();
         process.exit();
+      }
+    }
+  )
+  .command(
+    "kill",
+    "Kill all running instances of the codespin-sync server",
+    () => {},
+    () => {
+      try {
+        // Find all process IDs that match the process name pattern
+        const pgrepCommand = `pgrep -f "codespin-sync-server-"`;
+        const processIds = execSync(pgrepCommand).toString().trim().split("\n");
+
+        let killedCount = 0;
+
+        // Kill each process by its PID
+        processIds.forEach((pid) => {
+          if (pid) {
+            try {
+              if (process.platform === "win32") {
+                execSync(`taskkill /PID ${pid} /F`);
+              } else {
+                execSync(`kill -9 ${pid}`);
+              }
+              killedCount++;
+            } catch (error: any) {
+              // Continue to the next PID if the process cannot be killed
+              if (error.code !== 0) {
+                // Possible errors could be process already killed or non-existent
+                console.warn(
+                  `Failed to kill process with PID ${pid}: ${error.message}`
+                );
+              }
+            }
+          }
+        });
+
+        console.log(
+          `${killedCount} process${killedCount === 1 ? "" : "es"} killed.`
+        );
+      } catch (error: any) {
+        if (error.status === 1) {
+          console.log("No processes found to kill.");
+        } else {
+          console.error("Failed to kill processes:", error.message);
+        }
       }
     }
   )
