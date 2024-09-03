@@ -22,9 +22,8 @@ const nanoid = customAlphabet(
   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
   16
 );
-const generatedId = nanoid();
 
-async function startServer(port: number, autoExit: boolean) {
+async function startServer(port: number, projectId: string, autoExit: boolean) {
   if (isStarted) return;
 
   const app = express();
@@ -55,7 +54,7 @@ async function startServer(port: number, autoExit: boolean) {
   app.post(`/project/:id/keepalive`, (req, res) => {
     const { id } = req.params;
 
-    if (!id || id !== generatedId) {
+    if (!id || id !== projectId) {
       return res.status(400).json({ error: "Invalid id" });
     }
     lastKeepAlive = Date.now();
@@ -66,7 +65,7 @@ async function startServer(port: number, autoExit: boolean) {
     const { id } = req.params;
     const { type, filePath, contents } = req.body;
 
-    if (!id || id !== generatedId) {
+    if (!id || id !== projectId) {
       return res.status(400).json({ error: "Invalid id" });
     }
 
@@ -123,6 +122,10 @@ yargs(hideBin(process.argv))
           describe: "Path to the project",
           default: ".", // Default to current directory
         })
+        .option("id", {
+          type: "string",
+          default: "",
+        })
         .option("port", {
           type: "number",
           describe: "Port to run the server on",
@@ -142,8 +145,9 @@ yargs(hideBin(process.argv))
       if (argv.child) {
         // This is the child process, start the server
         projectPath = path.resolve(argv.project);
-        startServer(argv.port ?? 60280, argv.autoExit);
+        startServer(argv.port ?? 60280, argv.id, argv.autoExit);
       } else {
+        const randomId = nanoid();        
         // This is the parent process, fork a child process
         projectPath = path.resolve(argv.project);
         lastKeepAlive = Date.now();
@@ -160,6 +164,8 @@ yargs(hideBin(process.argv))
             port.toString(),
             "--auto-exit",
             argv.autoExit.toString(),
+            "--id",
+            randomId,
           ],
           {
             detached: true,
@@ -167,9 +173,7 @@ yargs(hideBin(process.argv))
           }
         );
 
-        console.log(
-          `Syncing at http://localhost:${port}/project/${generatedId}`
-        );
+        console.log(`Syncing at http://localhost:${port}/project/${randomId}`);
         child.unref();
         process.exit();
       }
