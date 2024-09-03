@@ -51,6 +51,16 @@ async function startServer(port: number, projectId: string, autoExit: boolean) {
 
   app.use(bodyParser.json());
 
+  app.get(`/project/:id`, (req, res) => {
+    const { id } = req.params;
+
+    if (!id || id !== projectId) {
+      return res.status(400).json({ error: "Invalid id" });
+    }
+
+    res.json({ result: "ok" });
+  });
+
   app.post(`/project/:id/keepalive`, (req, res) => {
     const { id } = req.params;
 
@@ -147,7 +157,7 @@ yargs(hideBin(process.argv))
         projectPath = path.resolve(argv.project);
         startServer(argv.port ?? 60280, argv.id, argv.autoExit);
       } else {
-        const randomId = nanoid();        
+        const randomId = nanoid();
         // This is the parent process, fork a child process
         projectPath = path.resolve(argv.project);
         lastKeepAlive = Date.now();
