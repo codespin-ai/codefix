@@ -13,7 +13,7 @@ A lightweight CLI tool to sync code with an IDE, run as a background server, and
 ## Installation
 
 ```bash
-npm i -g codespin-sync
+npm i -g codefix
 ```
 
 ## Usage
@@ -23,13 +23,13 @@ npm i -g codespin-sync
 To start the server and sync a project in the current directory, simply run:
 
 ```bash
-codespin-sync
+codefix
 ```
 
 To sync a project in a different directory, use this:
 
 ```bash
-codespin-sync --project /path/to/your/project
+codefix --project /path/to/your/project
 ```
 
 Note the url printed.
@@ -43,7 +43,7 @@ Options:
 Example:
 
 ```bash
-codespin-sync --project /home/user/myproject --port 8080 --auto-exit
+codefix --project /home/user/myproject --port 8080 --auto-exit
 ```
 
 Output:

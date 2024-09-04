@@ -2,24 +2,26 @@ import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import { Server } from "http";
-import { handleGetProject } from "./routes/getProject.js";
-import { handleKeepAlive } from "./routes/keepAlive.js";
-import { handleWrite } from "./routes/write.js";
+import {
+  handleAddProject,
+  handleGetProjects,
+  setProjects,
+  getProjects,
+} from "./routes/projects.js";
+import { handleWriteFile } from "./routes/files.js";
+import { loadSettings } from "./settings.js";
 
 let server: Server | null = null;
 let isStarted = false;
-let lastKeepAlive: number | null = null;
-export let projectPath: string | null = null;
+const settings = await loadSettings(); // Load settings (e.g., port, secret key)
+const { port, key: secretKey } = settings;
 
-export async function startServer(
-  port: number,
-  projectId: string,
-  autoExit: boolean
-) {
-  if (isStarted) return;
+export async function startServer(initialProjectPath: string) {
+  if (isStarted) return; // Prevent re-starting the server
 
   const app = express();
 
+  // Define CORS configuration
   const allowedOrigins = [
     "https://chatgpt.com",
     "https://chat.openai.com",
@@ -40,36 +42,55 @@ export async function startServer(
     })
   );
 
-  app.use(bodyParser.json());
+  app.use(bodyParser.json()); // Enable JSON parsing
 
   // Routes
-  app.get(`/project/:id`, (req, res) => handleGetProject(req, res, projectId));
-  app.post(`/project/:id/keepalive`, (req, res) =>
-    handleKeepAlive(req, res, projectId)
-  );
-  app.post(`/project/:id/write`, (req, res) =>
-    handleWrite(req, res, projectId)
-  );
+  app.post("/projects", (req, res) => handleAddProject(req, res)); // Add new project
+  app.get("/projects", (req, res) => handleGetProjects(req, res, secretKey)); // Get all projects
 
-  server = app.listen(port, () => {
-    isStarted = true;
-    console.log(`Server is running on port ${port}`);
+  app.post("/projects/:id/files/*", (req, res) => {
+    const projectId = req.params.id;
+    const projectPath = getProjectPath(projectId); // Fetch project path based on project ID
+    handleWriteFile(req, res, projectId, projectPath, secretKey); // Handle file write
   });
 
-  if (autoExit) {
-    setInterval(() => {
-      if (lastKeepAlive && Date.now() - lastKeepAlive > 60000) {
-        terminateServer();
-      }
-    }, 60000);
-  }
+  // Start server
+  server = app.listen(port, () => {
+    isStarted = true;
+    // On first run, add the initial project passed as argument
+    if (initialProjectPath) {
+      addInitialProject(initialProjectPath);
+    }
+  });
 }
 
+// Function to handle initial project on server start
+function addInitialProject(initialProjectPath: string) {
+  // Get existing projects and add the initial one
+  const currentProjects = getProjects();
+  const projectId = "INITIAL_PROJECT_ID"; // Generate a unique ID
+  const updatedProjects = [
+    ...currentProjects,
+    { id: projectId, path: initialProjectPath },
+  ];
+
+  setProjects(updatedProjects); // Set the updated list of projects
+}
+
+// Function to retrieve the project path by its ID (to be implemented properly)
+function getProjectPath(projectId: string): string {
+  const project = getProjects().find((p) => p.id === projectId);
+  if (!project) {
+    throw new Error(`Project with ID ${projectId} not found`);
+  }
+  return project.path;
+}
+
+// Function to terminate the server (optional based on your needs)
 export function terminateServer() {
   if (server) {
     server.close(() => {
       isStarted = false;
-      console.log("Server has been terminated");
       process.exit();
     });
   }

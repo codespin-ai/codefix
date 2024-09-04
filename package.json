@@ -1,5 +1,5 @@
 {
-  "name": "codespin-sync",
+  "name": "codefix",
   "version": "0.0.12",
   "description": "Sync codespaces with browser extensions",
   "main": "dist/index.js",
@@ -9,12 +9,12 @@
     "start": "node dist/index.js"
   },
   "bin": {
-    "codespin-sync": "dist/index.js"
+    "codefix": "dist/index.js"
   },
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/codespin-ai/codespin-sync.git"
+    "url": "git+https://github.com/codespin-ai/codefix.git"
   },
   "keywords": [
     "llm",
@@ -23,9 +23,9 @@
   "license": "MIT",
   "author": "CodeSpin.AI",
   "bugs": {
-    "url": "https://github.com/codespin-ai/codespin-sync/issues"
+    "url": "https://github.com/codespin-ai/codefix/issues"
   },
-  "homepage": "https://github.com/codespin-ai/codespin-sync#readme",
+  "homepage": "https://github.com/codespin-ai/codefix#readme",
   "dependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
