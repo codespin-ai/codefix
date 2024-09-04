@@ -47,6 +47,15 @@ yargs(hideBin(process.argv))
       }
     }
   )
+  .command("kill", "Stop the running codefix server", async () => {
+    try {
+      // Send a request to the server's /kill endpoint
+      execSync(`curl -X POST http://localhost:${port}/kill?key=${key}`);
+      console.log(`Server on port ${port} has been terminated.`);
+    } catch (err) {
+      console.error("Failed to terminate the server. Is it running?");
+    }
+  })
   .command("*", "Start the server and sync projects", async () => {
     const projectPath = path.resolve("."); // The project path to sync
 

@@ -47,11 +47,20 @@ export async function startServer(initialProjectPath: string) {
   // Routes
   app.post("/projects", (req, res) => handleAddProject(req, res)); // Add new project
   app.get("/projects", (req, res) => handleGetProjects(req, res, secretKey)); // Get all projects
-
   app.post("/projects/:id/files/*", (req, res) => {
     const projectId = req.params.id;
     const projectPath = getProjectPath(projectId); // Fetch project path based on project ID
     handleWriteFile(req, res, projectId, projectPath, secretKey); // Handle file write
+  });
+
+  // Add the /kill endpoint
+  app.post("/kill", (req, res) => {
+    const { key } = req.query;
+    if (key !== secretKey) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    res.json({ message: "Server is shutting down..." });
+    terminateServer();
   });
 
   // Start server
@@ -91,6 +100,7 @@ export function terminateServer() {
   if (server) {
     server.close(() => {
       isStarted = false;
+      console.log("Server has been terminated");
       process.exit();
     });
   }
