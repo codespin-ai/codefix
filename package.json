@@ -1,6 +1,6 @@
 {
   "name": "codefix",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Sync codespaces with browser extensions",
   "main": "dist/index.js",
   "scripts": {

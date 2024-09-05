@@ -30,6 +30,18 @@ export function handleAddProject(req: Request, res: Response) {
     return res.status(400).json({ error: "Invalid project path" });
   }
 
+  // Check if the project path is already being served
+  const existingProject = projects.find((project) => project.path === path);
+  if (existingProject) {
+    return res
+      .status(409)
+      .json({
+        error: "Project is already being served",
+        projectId: existingProject.id,
+      });
+  }
+
+  // Add the new project if it doesn't already exist
   const projectId = nanoid();
   const newProject = { id: projectId, path };
   projects.push(newProject);

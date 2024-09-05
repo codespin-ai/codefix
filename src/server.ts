@@ -8,7 +8,7 @@ import {
   setProjects,
   getProjects,
 } from "./routes/projects.js";
-import { handleWriteFile } from "./routes/files.js";
+import { handleWriteFile, handleGetFile } from "./routes/files.js";
 import { loadSettings } from "./settings.js";
 
 let server: Server | null = null;
@@ -47,6 +47,11 @@ export async function startServer(initialProjectPath: string) {
   // Routes
   app.post("/projects", (req, res) => handleAddProject(req, res)); // Add new project
   app.get("/projects", (req, res) => handleGetProjects(req, res, secretKey)); // Get all projects
+  app.get("/projects/:id/files/*", (req, res) => {
+    const projectId = req.params.id;
+    const projectPath = getProjectPath(projectId); // Fetch project path based on project ID
+    handleGetFile(req, res, projectId, projectPath, secretKey); // Handle file retrieval
+  });
   app.post("/projects/:id/files/*", (req, res) => {
     const projectId = req.params.id;
     const projectPath = getProjectPath(projectId); // Fetch project path based on project ID
@@ -86,7 +91,7 @@ function addInitialProject(initialProjectPath: string) {
   setProjects(updatedProjects); // Set the updated list of projects
 }
 
-// Function to retrieve the project path by its ID (to be implemented properly)
+// Function to retrieve the project path by its ID
 function getProjectPath(projectId: string): string {
   const project = getProjects().find((p) => p.id === projectId);
   if (!project) {
@@ -95,7 +100,7 @@ function getProjectPath(projectId: string): string {
   return project.path;
 }
 
-// Function to terminate the server (optional based on your needs)
+// Function to terminate the server
 export function terminateServer() {
   if (server) {
     server.close(() => {

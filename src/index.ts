@@ -6,9 +6,15 @@ import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { loadSettings, saveSettings } from "./settings.js";
 import { startServer } from "./server.js"; // Import server start logic
+import * as os from "os";
 
 const settings = await loadSettings();
 const { port, key } = settings;
+
+function isPathRestricted(projectPath: string): boolean {
+  const homeDir = os.homedir();
+  return projectPath === "/" || projectPath === homeDir;
+}
 
 yargs(hideBin(process.argv))
   .command(
@@ -59,6 +65,13 @@ yargs(hideBin(process.argv))
   .command("*", "Start the server and sync projects", async () => {
     const projectPath = path.resolve("."); // The project path to sync
 
+    if (isPathRestricted(projectPath)) {
+      console.error(
+        "Starting the server in the home directory or root is not allowed for security reasons."
+      );
+      process.exit(1);
+    }
+
     try {
       // Check if server is running on the specified port
       execSync(`lsof -i :${port}`);
@@ -93,6 +106,13 @@ if (process.argv.includes("--child")) {
     projectArgIndex > -1 ? process.argv[projectArgIndex + 1] : null;
 
   if (projectPath) {
+    if (isPathRestricted(projectPath)) {
+      console.error(
+        "Starting the server in the home directory or root is not allowed for security reasons."
+      );
+      process.exit(1);
+    }
+
     // Start the server with the provided project path
     startServer(projectPath); // This will initiate the Express server with the project
   } else {
