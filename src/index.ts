@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-import { execSync, fork } from "child_process";
+import { fork } from "child_process";
+import * as os from "os";
 import path from "path";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
+import { startServer } from "./server.js";
 import { loadSettings, saveSettings } from "./settings.js";
-import { startServer } from "./server.js"; // Import server start logic
-import * as os from "os";
 
 const settings = await loadSettings();
 const { port, key } = settings;
@@ -55,9 +55,16 @@ yargs(hideBin(process.argv))
   )
   .command("kill", "Stop the running codefix server", async () => {
     try {
-      // Send a request to the server's /kill endpoint
-      execSync(`curl -X POST http://localhost:${port}/kill?key=${key}`);
-      console.log(`Server on port ${port} has been terminated.`);
+      // Use fetch to send a request to the /kill endpoint
+      const response = await fetch(`http://localhost:${port}/kill?key=${key}`, {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        console.log(`Server on port ${port} has been terminated.`);
+      } else {
+        console.error("Failed to terminate the server. Is it running?");
+      }
     } catch (err) {
       console.error("Failed to terminate the server. Is it running?");
     }
@@ -73,14 +80,31 @@ yargs(hideBin(process.argv))
     }
 
     try {
-      // Check if server is running on the specified port
-      execSync(`lsof -i :${port}`);
-      console.log(`Syncing ${projectPath}`);
+      // Use fetch to check if the server is running by querying /about
+      const response = await fetch(`http://localhost:${port}/about`);
+      if (response.ok) {
+        // If the server is running, send a POST request to add the project
+        const projectResponse = await fetch(
+          `http://localhost:${port}/projects?key=${key}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ path: projectPath }),
+          }
+        );
 
-      // If the server is running, send a POST request to add the project
-      execSync(
-        `curl -X POST http://localhost:${port}/projects -d '{"path": "${projectPath}"}' -H "Content-Type: application/json" -H "Authorization: Bearer ${key}"`
-      );
+        if (projectResponse.ok) {
+          console.log(`Added path ${projectPath}`);
+        } else {
+          console.error(
+            "Failed to sync the project. Server responded with an error."
+          );
+        }
+      } else {
+        throw new Error("Server is not running.");
+      }
     } catch (err) {
       console.log(`Starting codefix server on port ${port}`);
 
@@ -93,6 +117,8 @@ yargs(hideBin(process.argv))
           stdio: "ignore", // Ignore stdio to avoid hanging
         }
       );
+
+      console.log(`Added path ${projectPath}`);
 
       process.exit(); // Exit the parent process to allow the child to run
     }

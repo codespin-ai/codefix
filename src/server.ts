@@ -9,19 +9,22 @@ import {
   getProjects,
 } from "./routes/projects.js";
 import { handleWriteFile, handleGetFile } from "./routes/files.js";
+import { handleKill } from "./routes/kill.js"; // Import the kill route handler
 import { loadSettings } from "./settings.js";
+import fs from "fs/promises";
 
 let server: Server | null = null;
 let isStarted = false;
 const settings = await loadSettings(); // Load settings (e.g., port, secret key)
 const { port, key: secretKey } = settings;
 
+let cachedVersion: string | null = null; // Cache for the version
+
 export async function startServer(initialProjectPath: string) {
   if (isStarted) return; // Prevent re-starting the server
 
   const app = express();
 
-  // Define CORS configuration
   const allowedOrigins = [
     "https://chatgpt.com",
     "https://chat.openai.com",
@@ -59,13 +62,20 @@ export async function startServer(initialProjectPath: string) {
   });
 
   // Add the /kill endpoint
-  app.post("/kill", (req, res) => {
-    const { key } = req.query;
-    if (key !== secretKey) {
-      return res.status(401).json({ error: "Unauthorized" });
+  app.post("/kill", (req, res) => handleKill(req, res, secretKey)); // Move /kill to route
+
+  // Add the /about endpoint
+  app.get("/about", async (req, res) => {
+    if (!cachedVersion) {
+      try {
+        const packageJson = await fs.readFile("./package.json", "utf-8");
+        const { version } = JSON.parse(packageJson);
+        cachedVersion = version; // Cache the version after reading
+      } catch (error) {
+        return res.status(500).json({ error: "Failed to load version" });
+      }
     }
-    res.json({ message: "Server is shutting down..." });
-    terminateServer();
+    res.json({ version: cachedVersion });
   });
 
   // Start server

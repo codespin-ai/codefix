@@ -32,13 +32,9 @@ export function handleAddProject(req: Request, res: Response) {
 
   // Check if the project path is already being served
   const existingProject = projects.find((project) => project.path === path);
+
   if (existingProject) {
-    return res
-      .status(409)
-      .json({
-        error: "Project is already being served",
-        projectId: existingProject.id,
-      });
+    res.status(201).json(existingProject);
   }
 
   // Add the new project if it doesn't already exist
