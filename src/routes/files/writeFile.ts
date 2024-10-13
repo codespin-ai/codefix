@@ -1,21 +1,16 @@
 import { Request, Response } from "express";
 import * as fs from "fs/promises";
 import * as path from "path";
-import { makeError, makeResult } from "../../Result.js";
+import { makeError, makeResult } from "../Result.js";
 
-export async function writeFileHandler(req: Request, res: Response) {
-  const projectPath = req.query.project as string;
-
-  if (!projectPath) {
-    return res.status(400).json(makeError("MISSING_PROJECT_PATH"));
-  }
+export async function writeFileHandler(req: Request, res: Response, projectPath: string) {
   const { contents } = req.body;
-
-  const filePath = req.params[0]; // For path after /files/
+  const filePath = req.params[0];
   const fullPath = path.join(projectPath, filePath);
 
-  if (!fullPath.startsWith(projectPath))
+  if (!fullPath.startsWith(projectPath)) {
     return res.status(400).json(makeError("INVALID_PATH"));
+  }
 
   try {
     await fs.writeFile(fullPath, contents, "utf-8");

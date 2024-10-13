@@ -4,26 +4,24 @@ import express from "express";
 import * as fs from "fs/promises";
 import { Server } from "http";
 import { keyValidationMiddleware } from "./middleware/keyValidation.js";
-import { killHandler } from "./routes/kill.js";
-import { addProject, addProjectHandler } from "./routes/projects/addProject.js";
-import { getFilesHandler } from "./routes/projects/files/getFiles.js";
-import { writeFileHandler } from "./routes/projects/files/writeFile.js";
-import { getProjectsHandler } from "./routes/projects/getProjects.js";
+import { getFilesHandler } from "./routes/files/getFiles.js";
+import { writeFileHandler } from "./routes/files/writeFile.js";
 import { makeError, makeResult } from "./routes/Result.js";
 import { loadSettings } from "./settings.js";
 
 let server: Server | null = null;
 let isStarted = false;
-const settings = await loadSettings(); // Load settings (e.g., port, secret key)
+const settings = await loadSettings();
 const { port, key: secretKey } = settings;
 
-let cachedVersion: string | null = null; // Cache for the version
+let cachedVersion: string | null = null;
 
-export async function startServer(initialProjectPath: string) {
+export async function startServer(projectPath: string) {
   if (isStarted) return; // Prevent re-starting the server
 
   const app = express();
 
+  // CORS configuration
   const allowedOrigins = [
     "https://chatgpt.com",
     "https://chat.openai.com",
@@ -50,53 +48,21 @@ export async function startServer(initialProjectPath: string) {
 
   app.use(bodyParser.json()); // Enable JSON parsing
 
-  // Validate the key param
+  // Key validation middleware
   app.use(keyValidationMiddleware(secretKey));
 
-  // Projects
-  app.get("/projects", (req, res) => getProjectsHandler(req, res));
-  app.post("/projects", (req, res) => addProjectHandler(req, res));
-
-  // Files
+  // File handling routes
   app.get("/files/*", (req, res) => {
-    getFilesHandler(req, res);
+    getFilesHandler(req, res, projectPath);
   });
   app.post("/files/*", (req, res) => {
-    writeFileHandler(req, res);
-  });
-
-  // Add the /kill endpoint
-  app.post("/kill", (req, res) => killHandler(req, res)); // Move /kill to route
-
-  // Add the /about endpoint
-  app.get("/about", async (req, res) => {
-    if (!cachedVersion) {
-      try {
-        const packageJson = await fs.readFile("./package.json", "utf-8");
-        const { version } = JSON.parse(packageJson);
-        cachedVersion = version; // Cache the version after reading
-      } catch (error) {
-        return res.status(500).json(makeError("CANNOT_LOAD_VERSION"));
-      }
-    }
-    res.json(makeResult({ version: cachedVersion }));
+    writeFileHandler(req, res, projectPath);
   });
 
   // Start server
   server = app.listen(port, () => {
-    console.log(`Started codefix server on port ${settings.port ?? 60280}.`);
+    console.log(`Started codefix server on port ${port}.`);
     isStarted = true;
-    // On first run, add the initial project passed as argument
-    if (initialProjectPath) {
-      addInitialProject(initialProjectPath);
-    }
-  });
-}
-
-// Function to handle initial project on server start
-function addInitialProject(initialProjectPath: string) {
-  addProject({
-    path: initialProjectPath,
   });
 }
 
