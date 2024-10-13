@@ -1,13 +1,11 @@
 import { Request, Response } from "express";
-import { getRandomId } from "../../utils/getRandomId.js";
 import { getProjects } from "./getProjects.js";
 import { makeError, makeResult } from "../Result.js";
 
 export function addProject({ path }: { path: string }) {
   // Add the new project if it doesn't already exist
   const projects = getProjects();
-  const projectId = getRandomId();
-  const project = { id: projectId, path };
+  const project = { path };
   projects.push(project);
   return project;
 }

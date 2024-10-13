@@ -1,20 +1,18 @@
-import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
-import { Server } from "http";
-import { killHandler } from "./routes/kill.js";
-import { loadSettings } from "./settings.js";
+import express from "express";
 import * as fs from "fs/promises";
+import { Server } from "http";
 import { keyValidationMiddleware } from "./middleware/keyValidation.js";
-import { getRandomId } from "./utils/getRandomId.js";
+import { killHandler } from "./routes/kill.js";
 import { addProject, addProjectHandler } from "./routes/projects/addProject.js";
-import {
-  getProjects,
-  getProjectsHandler,
-} from "./routes/projects/getProjects.js";
 import { getFilesHandler } from "./routes/projects/files/getFiles.js";
 import { writeFileHandler } from "./routes/projects/files/writeFile.js";
+import {
+  getProjectsHandler
+} from "./routes/projects/getProjects.js";
 import { makeError, makeResult } from "./routes/Result.js";
+import { loadSettings } from "./settings.js";
 
 let server: Server | null = null;
 let isStarted = false;
@@ -56,15 +54,11 @@ export async function startServer(initialProjectPath: string) {
   // Routes
   app.post("/projects", (req, res) => addProjectHandler(req, res)); // Add new project
   app.get("/projects", (req, res) => getProjectsHandler(req, res)); // Get all projects
-  app.get("/projects/:id/files/*", (req, res) => {
-    const projectId = req.params.id;
-    const projectPath = getProjectPath(projectId); // Fetch project path based on project ID
-    getFilesHandler(req, res, projectId, projectPath); // Handle file retrieval
+  app.get("/files/*", (req, res) => {
+    getFilesHandler(req, res); // Handle file retrieval
   });
-  app.post("/projects/:id/files/*", (req, res) => {
-    const projectId = req.params.id;
-    const projectPath = getProjectPath(projectId); // Fetch project path based on project ID
-    writeFileHandler(req, res, projectId, projectPath); // Handle file write
+  app.post("/files/*", (req, res) => {
+    writeFileHandler(req, res); // Handle file write
   });
 
   // Add the /kill endpoint
@@ -100,15 +94,6 @@ function addInitialProject(initialProjectPath: string) {
   addProject({
     path: initialProjectPath,
   });
-}
-
-// Function to retrieve the project path by its ID
-function getProjectPath(projectId: string): string {
-  const project = getProjects().find((p) => p.id === projectId);
-  if (!project) {
-    throw new Error(`Project with ID ${projectId} not found.`);
-  }
-  return project.path;
 }
 
 // Function to terminate the server

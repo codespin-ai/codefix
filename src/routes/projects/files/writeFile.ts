@@ -3,17 +3,13 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import { makeError, makeResult } from "../../Result.js";
 
-export async function writeFileHandler(
-  req: Request,
-  res: Response,
-  projectId: string,
-  projectPath: string
-) {
-  const { id } = req.params;
-  const { contents } = req.body;
+export async function writeFileHandler(req: Request, res: Response) {
+  const projectPath = req.query.project as string;
 
-  if (!id || id !== projectId)
-    return res.status(400).json(makeError("INVALID_PROJECT_ID"));
+  if (!projectPath) {
+    return res.status(400).json(makeError("MISSING_PROJECT_PATH"));
+  }
+  const { contents } = req.body;
 
   const filePath = req.params[0]; // For path after /files/
   const fullPath = path.join(projectPath, filePath);

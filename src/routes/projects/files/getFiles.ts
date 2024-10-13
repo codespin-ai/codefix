@@ -59,16 +59,11 @@ async function getDirectoryContentsRecursive(
   return contents.filter(Boolean);
 }
 
-export async function getFilesHandler(
-  req: Request,
-  res: Response,
-  projectId: string,
-  projectPath: string
-) {
-  const { id } = req.params;
+export async function getFilesHandler(req: Request, res: Response) {
+  const projectPath = req.query.project as string;
 
-  if (!id || id !== projectId) {
-    return res.status(400).json(makeError("INVALID_PROJECT_ID"));
+  if (!projectPath) {
+    return res.status(400).json(makeError("MISSING_PROJECT_PATH"));
   }
 
   const filePath = req.params[0]; // Path after /files/
