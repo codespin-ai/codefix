@@ -44,7 +44,7 @@ async function getDirectoryContentsRecursive(
   return contents.filter(Boolean);
 }
 
-export async function handleGetFile(
+export async function getFilesHandler(
   req: Request,
   res: Response,
   projectId: string,
