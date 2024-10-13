@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import fs from "fs/promises";
-import path from "path";
+import * as fs from "fs/promises";
+import * as path from "path";
 
 export async function handleWriteFile(
   req: Request,

@@ -2,7 +2,7 @@
 
 import { fork } from "child_process";
 import * as os from "os";
-import path from "path";
+import * as path from "path";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { loadSettings, saveSettings } from "./settings.js";

@@ -11,7 +11,7 @@ import {
 import { handleWriteFile, handleGetFile } from "./routes/files.js";
 import { handleKill } from "./routes/kill.js"; // Import the kill route handler
 import { loadSettings } from "./settings.js";
-import fs from "fs/promises";
+import * as fs from "fs/promises";
 import { keyValidationMiddleware } from "./middleware/keyValidation.js";
 import { nanoid } from "nanoid";
 

@@ -1,7 +1,7 @@
-import fs from "fs";
-import path from "path";
-import os from "os";
-import readline from "readline";
+import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
+import * as readline from "readline";
 
 const settingsPath = path.join(os.homedir(), ".codespin", "codefix.json");
 
