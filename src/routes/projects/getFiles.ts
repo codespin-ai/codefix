@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
 import * as fs from "fs/promises";
 import * as path from "path";
-import ignore from "ignore"; // Import default callable function
+import * as ignoreModule from "ignore"; // Import default callable function
+import { Ignore } from "ignore";
 
 // Utility function to recursively list files
 async function getDirectoryContentsRecursive(
   directory: string,
-  ig: typeof ignore
+  ig: Ignore
 ): Promise<any[]> {
   const items = await fs.readdir(directory, { withFileTypes: true });
 
@@ -65,7 +66,7 @@ export async function handleGetFile(
   try {
     // Load and parse .gitignore if it exists
     const gitignorePath = path.join(projectPath, ".gitignore");
-    const ig = ignore(); // Create an instance of ignore
+    const ig = ignoreModule.default(); // Create an instance of ignore
 
     try {
       const gitignoreContents = await fs.readFile(gitignorePath, "utf-8");

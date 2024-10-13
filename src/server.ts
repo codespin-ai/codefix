@@ -13,7 +13,7 @@ import { handleKill } from "./routes/kill.js"; // Import the kill route handler
 import { loadSettings } from "./settings.js";
 import * as fs from "fs/promises";
 import { keyValidationMiddleware } from "./middleware/keyValidation.js";
-import { nanoid } from "nanoid";
+import { getRandomId } from "./utils/getRandomId.js";
 
 let server: Server | null = null;
 let isStarted = false;
@@ -98,7 +98,7 @@ export async function startServer(initialProjectPath: string) {
 function addInitialProject(initialProjectPath: string) {
   // Get existing projects and add the initial one
   const currentProjects = getProjects();
-  const projectId = nanoid();
+  const projectId = getRandomId();
   const updatedProjects = [
     ...currentProjects,
     { id: projectId, path: initialProjectPath },

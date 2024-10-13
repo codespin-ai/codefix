@@ -1,10 +1,5 @@
 import { Request, Response } from "express";
-import { customAlphabet } from "nanoid";
-
-const nanoid = customAlphabet(
-  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-  16
-);
+import { getRandomId } from "../utils/getRandomId.js";
 
 interface Project {
   id: string;
@@ -25,7 +20,7 @@ export function setProjects(newProjects: Project[]) {
 
 function addProject({ path }: { path: string }) {
   // Add the new project if it doesn't already exist
-  const projectId = nanoid();
+  const projectId = getRandomId();
   const project = { id: projectId, path };
   projects.push(project);
   return project;
