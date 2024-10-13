@@ -8,16 +8,26 @@ import { makeError, makeResult } from "../../Result.js";
 // Utility function to recursively list files
 async function getDirectoryContentsRecursive(
   directory: string,
-  ig: Ignore
+  ig: Ignore,
+  projectPath: string // Added projectPath parameter
 ): Promise<any[]> {
   const items = await fs.readdir(directory, { withFileTypes: true });
 
   const contents = await Promise.all(
     items.map(async (item) => {
       const itemPath = path.join(directory, item.name);
+      const relativePath = path
+        .relative(projectPath, itemPath)
+        .split(path.sep)
+        .join("/"); // Normalize to POSIX paths
 
-      // Check if path is ignored
-      if (ig.ignores(path.relative(directory, itemPath))) {
+      // **Programmatically exclude .git directory**
+      if (relativePath === ".git" || relativePath.startsWith(".git/")) {
+        return null;
+      }
+
+      // Check if path is ignored by .gitignore
+      if (ig.ignores(relativePath)) {
         return null;
       }
 
@@ -28,7 +38,11 @@ async function getDirectoryContentsRecursive(
         return {
           type: "dir",
           name: item.name,
-          contents: await getDirectoryContentsRecursive(itemPath, ig),
+          contents: await getDirectoryContentsRecursive(
+            itemPath,
+            ig,
+            projectPath
+          ), // Pass projectPath down
         };
       } else {
         // File entry
@@ -60,7 +74,8 @@ export async function getFilesHandler(
   const filePath = req.params[0]; // Path after /files/
   const fullPath = path.join(projectPath, filePath);
 
-  if (!fullPath.startsWith(projectPath)) {
+  // Prevent directory traversal
+  if (!path.resolve(fullPath).startsWith(path.resolve(projectPath))) {
     return res.status(400).json(makeError("INVALID_PATH"));
   }
 
@@ -79,7 +94,11 @@ export async function getFilesHandler(
     const stats = await fs.stat(fullPath);
     if (stats.isDirectory()) {
       // Recursively list the contents of the directory
-      const contents = await getDirectoryContentsRecursive(fullPath, ig);
+      const contents = await getDirectoryContentsRecursive(
+        fullPath,
+        ig,
+        projectPath
+      ); // Pass projectPath
       res.json(makeResult({ type: "dir", contents }));
     } else {
       // If it's a file, read and return its contents
@@ -94,6 +113,7 @@ export async function getFilesHandler(
       );
     }
   } catch (err) {
+    console.error(err); // Log the error for debugging purposes
     res.status(500).json(makeError("UNABLE_TO_READ_PATH"));
   }
 }
