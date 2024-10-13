@@ -23,6 +23,14 @@ export function setProjects(newProjects: Project[]) {
   projects = newProjects;
 }
 
+function addProject({ path }: { path: string }) {
+  // Add the new project if it doesn't already exist
+  const projectId = nanoid();
+  const project = { id: projectId, path };
+  projects.push(project);
+  return project;
+}
+
 // Add a new project
 export function handleAddProject(req: Request, res: Response) {
   const { path } = req.body;
@@ -35,26 +43,12 @@ export function handleAddProject(req: Request, res: Response) {
 
   if (existingProject) {
     res.status(201).json(existingProject);
+  } else {
+    const project = addProject(path);
+    res.status(201).json(project);
   }
-
-  // Add the new project if it doesn't already exist
-  const projectId = nanoid();
-  const newProject = { id: projectId, path };
-  projects.push(newProject);
-
-  res.status(201).json(newProject);
 }
 
-// Get all projects (requires valid secret key)
-export function handleGetProjects(
-  req: Request,
-  res: Response,
-  secretKey: string
-) {
-  const { key } = req.query;
-  if (key !== secretKey) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-
+export function handleGetProjects(req: Request, res: Response) {
   res.json(projects);
 }

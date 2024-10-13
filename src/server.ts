@@ -12,6 +12,8 @@ import { handleWriteFile, handleGetFile } from "./routes/files.js";
 import { handleKill } from "./routes/kill.js"; // Import the kill route handler
 import { loadSettings } from "./settings.js";
 import fs from "fs/promises";
+import { keyValidationMiddleware } from "./middleware/keyValidation.js";
+import { nanoid } from "nanoid";
 
 let server: Server | null = null;
 let isStarted = false;
@@ -47,22 +49,25 @@ export async function startServer(initialProjectPath: string) {
 
   app.use(bodyParser.json()); // Enable JSON parsing
 
+  // Validate the key param
+  app.use(keyValidationMiddleware(secretKey));
+
   // Routes
   app.post("/projects", (req, res) => handleAddProject(req, res)); // Add new project
-  app.get("/projects", (req, res) => handleGetProjects(req, res, secretKey)); // Get all projects
+  app.get("/projects", (req, res) => handleGetProjects(req, res)); // Get all projects
   app.get("/projects/:id/files/*", (req, res) => {
     const projectId = req.params.id;
     const projectPath = getProjectPath(projectId); // Fetch project path based on project ID
-    handleGetFile(req, res, projectId, projectPath, secretKey); // Handle file retrieval
+    handleGetFile(req, res, projectId, projectPath); // Handle file retrieval
   });
   app.post("/projects/:id/files/*", (req, res) => {
     const projectId = req.params.id;
     const projectPath = getProjectPath(projectId); // Fetch project path based on project ID
-    handleWriteFile(req, res, projectId, projectPath, secretKey); // Handle file write
+    handleWriteFile(req, res, projectId, projectPath); // Handle file write
   });
 
   // Add the /kill endpoint
-  app.post("/kill", (req, res) => handleKill(req, res, secretKey)); // Move /kill to route
+  app.post("/kill", (req, res) => handleKill(req, res)); // Move /kill to route
 
   // Add the /about endpoint
   app.get("/about", async (req, res) => {
@@ -80,6 +85,7 @@ export async function startServer(initialProjectPath: string) {
 
   // Start server
   server = app.listen(port, () => {
+    console.log(`Started codefix server on port ${settings.port ?? 60280}.`);
     isStarted = true;
     // On first run, add the initial project passed as argument
     if (initialProjectPath) {
@@ -92,7 +98,7 @@ export async function startServer(initialProjectPath: string) {
 function addInitialProject(initialProjectPath: string) {
   // Get existing projects and add the initial one
   const currentProjects = getProjects();
-  const projectId = "INITIAL_PROJECT_ID"; // Generate a unique ID
+  const projectId = nanoid();
   const updatedProjects = [
     ...currentProjects,
     { id: projectId, path: initialProjectPath },
@@ -115,7 +121,7 @@ export function terminateServer() {
   if (server) {
     server.close(() => {
       isStarted = false;
-      console.log("Server has been terminated");
+      console.log("Server has been terminated.");
       process.exit();
     });
   }

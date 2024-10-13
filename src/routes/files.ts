@@ -6,14 +6,10 @@ export async function handleWriteFile(
   req: Request,
   res: Response,
   projectId: string,
-  projectPath: string,
-  secretKey: string
+  projectPath: string
 ) {
   const { id } = req.params;
   const { contents } = req.body;
-  const { key } = req.query;
-
-  if (key !== secretKey) return res.status(401).json({ error: "Unauthorized" });
 
   if (!id || id !== projectId)
     return res.status(400).json({ error: "Invalid project id" });
@@ -37,12 +33,8 @@ export async function handleGetFile(
   res: Response,
   projectId: string,
   projectPath: string,
-  secretKey: string
 ) {
   const { id } = req.params;
-  const { key } = req.query;
-
-  if (key !== secretKey) return res.status(401).json({ error: "Unauthorized" });
 
   if (!id || id !== projectId)
     return res.status(400).json({ error: "Invalid project id" });

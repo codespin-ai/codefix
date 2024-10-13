@@ -7,22 +7,25 @@ const settingsPath = path.join(os.homedir(), ".codespin", "codefix.json");
 
 interface Settings {
   key: string;
-  port: number;
+  port?: number;
 }
 
 export async function loadSettings(): Promise<Settings> {
   if (!fs.existsSync(settingsPath)) {
+    console.log("The auth key was not found. Let's create one.");
     fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
     const key = await promptForKey(); // Await user input using readline
     const defaultSettings: Settings = {
       key: key,
-      port: 60280,
     };
     saveSettings(defaultSettings);
+    console.log(`Saved key to ${settingsPath}.`);
     return defaultSettings;
   } else {
     const data = fs.readFileSync(settingsPath, "utf-8");
-    return JSON.parse(data) as Settings;
+    const settings = JSON.parse(data) as Settings;
+    settings.port = settings.port ?? 60280;
+    return settings;
   }
 }
 
