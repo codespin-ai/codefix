@@ -14,6 +14,7 @@ import {
 } from "./routes/projects/getProjects.js";
 import { getFilesHandler } from "./routes/projects/files/getFiles.js";
 import { writeFileHandler } from "./routes/projects/files/writeFile.js";
+import { makeError, makeResult } from "./routes/Result.js";
 
 let server: Server | null = null;
 let isStarted = false;
@@ -77,10 +78,10 @@ export async function startServer(initialProjectPath: string) {
         const { version } = JSON.parse(packageJson);
         cachedVersion = version; // Cache the version after reading
       } catch (error) {
-        return res.status(500).json({ error: "Failed to load version" });
+        return res.status(500).json(makeError("CANNOT_LOAD_VERSION"));
       }
     }
-    res.json({ version: cachedVersion });
+    res.json(makeResult({ version: cachedVersion }));
   });
 
   // Start server
@@ -105,7 +106,7 @@ function addInitialProject(initialProjectPath: string) {
 function getProjectPath(projectId: string): string {
   const project = getProjects().find((p) => p.id === projectId);
   if (!project) {
-    throw new Error(`Project with ID ${projectId} not found`);
+    throw new Error(`Project with ID ${projectId} not found.`);
   }
   return project.path;
 }

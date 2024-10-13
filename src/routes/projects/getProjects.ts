@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Project } from "./types.js";
+import { makeResult } from "../Result.js";
 
 let projects: Project[] = []; // Array to hold project data
 
@@ -9,5 +10,5 @@ export function getProjects(): Project[] {
 }
 
 export function getProjectsHandler(req: Request, res: Response) {
-  res.json(projects);
+  res.json(makeResult(projects));
 }

@@ -3,6 +3,7 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import * as ignoreModule from "ignore"; // Import default callable function
 import { Ignore } from "ignore";
+import { makeError, makeResult } from "../../Result.js";
 
 // Utility function to recursively list files
 async function getDirectoryContentsRecursive(
@@ -53,14 +54,14 @@ export async function getFilesHandler(
   const { id } = req.params;
 
   if (!id || id !== projectId) {
-    return res.status(400).json({ error: "Invalid project id" });
+    return res.status(400).json(makeError("INVALID_PROJECT_ID"));
   }
 
   const filePath = req.params[0]; // Path after /files/
   const fullPath = path.join(projectPath, filePath);
 
   if (!fullPath.startsWith(projectPath)) {
-    return res.status(400).json({ error: "Invalid file path" });
+    return res.status(400).json(makeError("INVALID_PATH"));
   }
 
   try {
@@ -79,18 +80,20 @@ export async function getFilesHandler(
     if (stats.isDirectory()) {
       // Recursively list the contents of the directory
       const contents = await getDirectoryContentsRecursive(fullPath, ig);
-      res.json({ type: "dir", contents });
+      res.json(makeResult({ type: "dir", contents }));
     } else {
       // If it's a file, read and return its contents
       const fileContents = await fs.readFile(fullPath, "utf-8");
-      res.json({
-        type: "file",
-        name: path.basename(fullPath),
-        contents: fileContents,
-        length: stats.size, // Add file length (size in bytes)
-      });
+      res.json(
+        makeResult({
+          type: "file",
+          name: path.basename(fullPath),
+          contents: fileContents,
+          length: stats.size, // Add file length (size in bytes)
+        })
+      );
     }
   } catch (err) {
-    res.status(500).json({ error: "Failed to read file or directory" });
+    res.status(500).json(makeError("UNABLE_TO_READ_PATH"));
   }
 }

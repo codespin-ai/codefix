@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { getRandomId } from "../../utils/getRandomId.js";
 import { getProjects } from "./getProjects.js";
+import { makeError, makeResult } from "../Result.js";
 
 export function addProject({ path }: { path: string }) {
   // Add the new project if it doesn't already exist
@@ -15,7 +16,7 @@ export function addProject({ path }: { path: string }) {
 export function addProjectHandler(req: Request, res: Response) {
   const { path } = req.body;
   if (!path) {
-    return res.status(400).json({ error: "Invalid project path" });
+    return res.status(400).json(makeError("INVALID_PATH"));
   }
 
   // Check if the project path is already being served
@@ -24,9 +25,9 @@ export function addProjectHandler(req: Request, res: Response) {
   );
 
   if (existingProject) {
-    res.status(201).json(existingProject);
+    res.status(201).json(makeResult(existingProject));
   } else {
     const project = addProject(path);
-    res.status(201).json(project);
+    res.status(201).json(makeResult(project));
   }
 }
