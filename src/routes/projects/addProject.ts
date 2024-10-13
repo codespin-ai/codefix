@@ -5,7 +5,7 @@ import { makeError, makeResult } from "../Result.js";
 export function addProject({ path }: { path: string }) {
   // Add the new project if it doesn't already exist
   const projects = getProjects();
-  const project = { path };
+  const project = { path: path.replace(/\/$/, "") };
   projects.push(project);
   return project;
 }

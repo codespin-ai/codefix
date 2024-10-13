@@ -8,9 +8,7 @@ import { killHandler } from "./routes/kill.js";
 import { addProject, addProjectHandler } from "./routes/projects/addProject.js";
 import { getFilesHandler } from "./routes/projects/files/getFiles.js";
 import { writeFileHandler } from "./routes/projects/files/writeFile.js";
-import {
-  getProjectsHandler
-} from "./routes/projects/getProjects.js";
+import { getProjectsHandler } from "./routes/projects/getProjects.js";
 import { makeError, makeResult } from "./routes/Result.js";
 import { loadSettings } from "./settings.js";
 
@@ -41,7 +39,11 @@ export async function startServer(initialProjectPath: string) {
           callback(new Error("Not allowed by CORS"));
         }
       },
-      allowedHeaders: ["Content-Type", "Access-Control-Allow-Private-Network"],
+      allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "Access-Control-Allow-Private-Network",
+      ],
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     })
   );
@@ -51,14 +53,16 @@ export async function startServer(initialProjectPath: string) {
   // Validate the key param
   app.use(keyValidationMiddleware(secretKey));
 
-  // Routes
-  app.post("/projects", (req, res) => addProjectHandler(req, res)); // Add new project
-  app.get("/projects", (req, res) => getProjectsHandler(req, res)); // Get all projects
+  // Projects
+  app.get("/projects", (req, res) => getProjectsHandler(req, res));
+  app.post("/projects", (req, res) => addProjectHandler(req, res));
+
+  // Files
   app.get("/files/*", (req, res) => {
-    getFilesHandler(req, res); // Handle file retrieval
+    getFilesHandler(req, res);
   });
   app.post("/files/*", (req, res) => {
-    writeFileHandler(req, res); // Handle file write
+    writeFileHandler(req, res);
   });
 
   // Add the /kill endpoint
