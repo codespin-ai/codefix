@@ -1,12 +1,10 @@
 import bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
-import * as fs from "fs/promises";
 import { Server } from "http";
 import { keyValidationMiddleware } from "./middleware/keyValidation.js";
 import { getFilesHandler } from "./routes/files/getFiles.js";
 import { writeFileHandler } from "./routes/files/writeFile.js";
-import { makeError, makeResult } from "./routes/Result.js";
 import { loadSettings } from "./settings.js";
 
 let server: Server | null = null;

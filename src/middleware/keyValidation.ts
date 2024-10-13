@@ -1,7 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import { makeError } from "../routes/Result.js";
 
-export function keyValidationMiddleware(secretKey: string) {
+export function keyValidationMiddleware(
+  secretKey: string
+): (req: Request, res: Response, next: NextFunction) => any {
   return (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
     const queryKey = req.query.key;
