@@ -50,6 +50,12 @@ export async function startServer(projectPath: string) {
   app.use(keyValidationMiddleware(secretKey));
 
   // File handling routes
+  app.get("/files", (req, res) => {
+    getFilesHandler(req, res, projectPath);
+  });
+  app.post("/files", (req, res) => {
+    writeFileHandler(req, res, projectPath);
+  });
   app.get("/files/*", (req, res) => {
     getFilesHandler(req, res, projectPath);
   });

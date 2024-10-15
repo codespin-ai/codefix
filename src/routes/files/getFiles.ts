@@ -24,7 +24,7 @@ async function getDirectoryContentsRecursive(
         return null;
       }
 
-      if (ig.ignores(relativePath)) {
+      if (ig.ignores(relativePath) || ig.ignores(relativePath + "/")) {
         return null;
       }
 
@@ -58,11 +58,11 @@ export async function getFilesHandler(
   res: Response,
   projectPath: string
 ) {
-  const filePath = req.params[0];
+  const filePath = req.params[0] ? req.params[0] : "";
   const fullPath = path.join(projectPath, filePath);
 
   if (!path.resolve(fullPath).startsWith(path.resolve(projectPath))) {
-    return res.status(400).json(makeError("INVALID_PATH"));
+    return res.status(400).json(makeError("PATH_OUTSIDE_PROJECT"));
   }
 
   try {
