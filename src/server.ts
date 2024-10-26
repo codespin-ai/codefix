@@ -3,16 +3,16 @@ import cors from "cors";
 import express from "express";
 import { Server } from "http";
 import { keyValidationMiddleware } from "./middleware/keyValidation.js";
+import { getFileContentHandler } from "./routes/files/getFileContent.js";
 import { getFilesHandler } from "./routes/files/getFiles.js";
 import { writeFileHandler } from "./routes/files/writeFile.js";
 import { loadSettings } from "./settings.js";
+import { killHandler } from "./routes/kill.js";
 
 let server: Server | null = null;
 let isStarted = false;
 const settings = await loadSettings();
 const { port, key: secretKey } = settings;
-
-let cachedVersion: string | null = null;
 
 export async function startServer(projectPath: string) {
   if (isStarted) return; // Prevent re-starting the server
@@ -49,7 +49,7 @@ export async function startServer(projectPath: string) {
   // Key validation middleware
   app.use(keyValidationMiddleware(secretKey));
 
-  // File handling routes
+  // File listing and creation routes
   app.get("/files", (req, res) => {
     getFilesHandler(req, res, projectPath);
   });
@@ -61,6 +61,16 @@ export async function startServer(projectPath: string) {
   });
   app.post("/files/*", (req, res) => {
     writeFileHandler(req, res, projectPath);
+  });
+
+  // File Contents
+  app.get("/file-content/*", (req, res) => {
+    getFileContentHandler(req, res, projectPath);
+  });
+
+  // Kill
+  app.get("/kill", (req, res) => {
+    killHandler(req, res);
   });
 
   // Start server

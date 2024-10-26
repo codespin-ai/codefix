@@ -48,8 +48,7 @@ yargs(hideBin(process.argv))
   .command("kill", "Stop the running codefix server", async () => {
     try {
       const response = await fetch(
-        `http://localhost:${settings.port}/kill?key=${settings.key}`,
-        { method: "POST" }
+        `http://localhost:${settings.port}/kill?key=${settings.key}`
       );
       if (response.ok) {
         console.log(`Server on port ${settings.port} has been terminated.`);
