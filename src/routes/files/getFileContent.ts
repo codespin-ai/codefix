@@ -32,6 +32,7 @@ export async function getFileContentHandler(
       makeResult({
         type: "file",
         name: path.basename(fullPath),
+        path: fullPath,
         contents: fileContents,
         length: stats.size,
       })
