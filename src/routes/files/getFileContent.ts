@@ -31,7 +31,7 @@ export async function getFileContentHandler(
     res.json(
       makeResult({
         type: "file",
-        name: path.basename(fullPath),
+        filename: path.basename(fullPath),
         path: fullPath,
         contents: fileContents,
         size: stats.size,
