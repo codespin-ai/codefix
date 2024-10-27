@@ -34,7 +34,7 @@ export async function getFileContentHandler(
         name: path.basename(fullPath),
         path: fullPath,
         contents: fileContents,
-        length: stats.size,
+        size: stats.size,
       })
     );
   } catch (err) {
